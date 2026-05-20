@@ -1,0 +1,195 @@
+SYSTEM:
+  NUM_GPUS: 1
+  NUM_CPUS: 8
+
+MODEL:
+  ARCHITECTURE: unet_plus_3d #paper documentation
+  BLOCK_TYPE: residual_se
+  INPUT_SIZE: [16, 64, 64] # DHW
+  OUTPUT_SIZE: [16, 64, 64]
+  IN_PLANES: 1
+  NORM_MODE: bn #batchnorm3D because of one gpu
+  FILTERS: [32, 64, 96, 128, 160]  #find paper documnetation on this
+  OUT_PLANES: 1
+  LOSS_OPTION:
+    - - WeightedBCE
+      - DiceLoss
+      - TopoLossMSE2D_slice
+  LOSS_WEIGHT: [[0.5, 0.5, 1.0]]
+  WEIGHT_OPT: [['1', '1', '1']]
+  LOSS_KWARGS_KEY: [[[], [], ['topo_dim', 'topo_weight']]]
+  LOSS_KWARGS_VAL: [[[], [], [0, 0.0001]]]
+  TARGET_OPT: ['0']
+  OUTPUT_ACT: [['sigmoid', 'sigmoid', 'sigmoid']]
+  PRE_MODEL: 'outputs/baseline/Pre-train/checkpoint_best.pth.tar'
+
+DATASET:
+  INPUT_PATH: datasets/MitoAICS/
+  OUTPUT_PATH: outputs/fold1/Topo-slice-BCE/
+  IMAGE_NAME: [
+    "allfiles/3Dimg/raw7.tif",
+    "allfiles/3Dimg/raw7.tif",
+    "allfiles/3Dimg/raw7.tif",
+    "allfiles/3Dimg/raw7.tif",
+    "allfiles/3Dimg/raw7.tif",
+
+    "allfiles/3Dimg/raw28.tif",
+    "allfiles/3Dimg/raw28.tif",
+    "allfiles/3Dimg/raw28.tif",
+    "allfiles/3Dimg/raw28.tif",
+    "allfiles/3Dimg/raw28.tif",
+
+    "allfiles/3Dimg/raw29.tif",
+    "allfiles/3Dimg/raw29.tif",
+    "allfiles/3Dimg/raw29.tif",
+    "allfiles/3Dimg/raw29.tif",
+    "allfiles/3Dimg/raw29.tif",
+
+    "allfiles/3Dimg/raw8.tif",
+    "allfiles/3Dimg/raw9.tif",
+    "allfiles/3Dimg/raw10.tif",
+    "allfiles/3Dimg/raw11.tif",
+    "allfiles/3Dimg/raw12.tif",
+    "allfiles/3Dimg/raw14.tif"
+  ]
+  LABEL_NAME: [
+    "allfiles/3Dedited/raw7.tif",
+    "allfiles/3Dedited/raw7.tif",
+    "allfiles/3Dedited/raw7.tif",
+    "allfiles/3Dedited/raw7.tif",
+    "allfiles/3Dedited/raw7.tif",
+
+    "allfiles/3Dedited/raw28.tif",
+    "allfiles/3Dedited/raw28.tif",
+    "allfiles/3Dedited/raw28.tif",
+    "allfiles/3Dedited/raw28.tif",
+    "allfiles/3Dedited/raw28.tif",
+
+    "allfiles/3Dedited/raw29.tif",
+    "allfiles/3Dedited/raw29.tif",
+    "allfiles/3Dedited/raw29.tif",
+    "allfiles/3Dedited/raw29.tif",
+    "allfiles/3Dedited/raw29.tif",
+
+    "allfiles/3Dgt/raw8.tif",
+    "allfiles/3Dgt/raw9.tif",
+    "allfiles/3Dgt/raw10.tif",
+    "allfiles/3Dgt/raw11.tif",
+    "allfiles/3Dgt/raw12.tif",
+    "allfiles/3Dgt/raw14.tif"
+  ]
+  VAL_IMAGE_NAME: [
+    "allfiles/3Dimg/raw5.tif"
+  ]
+  VAL_LABEL_NAME: [
+    "allfiles/3Dedited/raw5.tif"
+  ]
+  PAD_SIZE: [0, 0, 0]
+  DO_CHUNK_TITLE: 0 # No chunking as it removes empty patches
+  # DATA_CHUNK_NUM: [2, 2, 2] # chunks across each dimension, D/2, H/4, W/4
+  # DATA_CHUNK_ITER: 20000 # specifies the number of iterations for which the chunked data will be used during training
+  REJECT_SAMPLING:
+    SIZE_THRES: 1000
+    DIVERSITY: 1  
+    P: 0.95  
+    NUM_TRIAL: 50 
+
+AUGMENTOR:
+  ENABLED: true
+  COPYPASTE:
+    AUG_THRES: 0.7
+    ENABLED: false
+    P: 0.8
+    SKIP: []
+  CUTBLUR:
+    DOWNSAMPLE_Z: false
+    DOWN_RATIO_MAX: 4.0
+    DOWN_RATIO_MIN: 1.5
+    ENABLED: false
+    LENGTH_RATIO: 0.3
+    P: 0.2
+    SKIP: []
+  CUTNOISE:
+    ENABLED: false
+    LENGTH_RATIO: 0.4
+    P: 0.75
+    SCALE: 0.3
+    SKIP: []
+  ELASTIC:
+    ALPHA: 16.0
+    ENABLED: true
+    P: 0.6
+    SIGMA: 4.0
+    SKIP: []
+  FLIP:
+    DO_ZTRANS: 0
+    ENABLED: true
+    P: 0.4
+    SKIP: []
+  GRAYSCALE:
+    ENABLED: false
+    P: 0.3
+    SKIP: []
+  MISALIGNMENT:
+    DISPLACEMENT: 16
+    ENABLED: false
+    P: 0.5
+    ROTATE_RATIO: 0.5
+    SKIP: []
+  MISSINGPARTS:
+    ENABLED: false
+    ITER: 64
+    P: 0.9
+    SKIP: []
+  MISSINGSECTION:
+    ENABLED: false
+    NUM_SECTION: 2
+    P: 0.5
+    SKIP: []
+  MOTIONBLUR:
+    ENABLED: false
+    KERNEL_SIZE: 11
+    P: 0.5
+    SECTIONS: 2
+    SKIP: []
+  RESCALE:
+    ENABLED: false
+    FIX_ASPECT: false
+    P: 0.5
+    SKIP: []
+  ROTATE:
+    ENABLED: true
+    P: 0.4
+    ROT90: true
+    SKIP: []
+  SMOOTH: false
+
+
+SOLVER:
+  NAME: "Adam"
+  LR_SCHEDULER_NAME: WarmupCosineLR
+  BASE_LR: 0.0001
+  ITERATION_STEP: 1
+  ITERATION_SAVE: 5000
+  ITERATION_TOTAL: 25000
+  ITERATION_VAL: 250
+  SAMPLES_PER_BATCH: 16
+
+INFERENCE:
+  DO_EVAL: true
+  DO_SINGLY: false
+  DO_CHUNK_TITLE: 0
+  INPUT_SIZE: [16, 64, 64]
+  OUTPUT_SIZE: [16, 64, 64]
+  IMAGE_NAME: [
+        "datasets/MitoAICS/allfiles/3Dimg/raw1.tif",
+        "datasets/MitoAICS/allfiles/3Dimg/raw4.tif",
+  ]
+  OUTPUT_PATH: 'outputs/fold1/Topo-slice-BCE/test/'
+  OUTPUT_NAME: 'test'
+  PAD_SIZE: [4, 64, 64]
+  UNPAD: True
+  AUG_MODE: mean
+  AUG_NUM: 4
+  STRIDE: [8, 32, 32]
+  SAMPLES_PER_BATCH: 16
